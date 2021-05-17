@@ -1,46 +1,41 @@
 from tkinter import *
+from tkinter import messagebox
 import requests
-import json
 
+sample_list = []
 root_window = Tk()
 root_window.title("Investment App")
 root_window.geometry('800x800')
 
-apple_label = Label(root_window, fg="green", font=("Arial", 25), text='AAPL')
-apple_label.pack()
 
-google_label = Label(root_window, fg='red', font=("Arial", 25), text='GOOGL')
-google_label.pack()
+def create_labels(names):
+    for name in names:
+        response = requests.get(
+            f'https://api.twelvedata.com/time_series?symbol={name}&interval=1min&type=stock&outputsize=2'
+            f'&format=JSON&dp=4&timezone=Asia/Baku&apikey=221481cc802c42d8abe9b77a00297f2d')
+        label = Label(root_window, font=("Arial", 25), text=name + ':' + response.json()['values'][0]['close'])
+        label.pack()
+        sample_list.append(label)
 
-indonesian_rupiah = Label(root_window, fg='red', font=("Arial", 25), text='USD IDR :')
-indonesian_rupiah.pack()
 
-google_response = requests.get(
-    'https://api.twelvedata.com/time_series?symbol=GOOG&interval=1min&type=stock&outputsize=2'
-    '&format=JSON&dp=4&timezone=Asia/Baku&apikey=221481cc802c42d8abe9b77a00297f2d')
+def change_email(new_email):
+    f = open("email", "w")
+    f.write(new_email)
+    f.close()
+    messagebox.showinfo("Success", "Email is changed to " + new_email)
 
-print('test')
-print(json.loads(google_response.text)['values'])
 
-print(google_response.json()['values'][0]['close'])
-# print(json.loads(google_response.text)['values'][0]['open'])
-# print(json.loads(google_response.text)['values'][0]['close'])
-# print(json.loads(google_response.text)['values'][0]['high'])
-# print(json.loads(google_response.text)['values'][0]['low'])
-#
-apple_response = requests.get('https://api.twelvedata.com/time_series?symbol=AAPL&interval=1min&type=stock&outputsize'
-                              '=1&format=JSON&dp=4&timezone=Asia/Baku&apikey=221481cc802c42d8abe9b77a00297f2d')
+def get_email():
+    f = open("email", "r")
+    contents = f.read()
+    print(contents)
 
-rupiah_response = requests.get('https://api.twelvedata.com/time_series?symbol=USD/IDR&interval=1min&outputsize=1'
-                               '&format=JSON&dp=4&timezone=Europe/Moscow&apikey=221481cc802c42d8abe9b77a00297f2d')
 
-# stock_prices['AAPL'] = google_response.json()['values'][0]['close']
-# stock_prices['GOOGL'] = google_response.json()['values'][0]['close']
-
-apple_label.config(text='GOOGL : ' + google_response.json()['values'][0]['close'])
-google_label.configure(text='AAPL : ' + apple_response.json()['values'][0]['close'])
-indonesian_rupiah.config(text='IDR : ' + rupiah_response.json()['values'][0]['close'])
-
-# Создание десктопного приложения для анализа цен на фондовом рынке
+entry = Entry()
+entry.pack()
+button = Button(text='Change email address', command=lambda: change_email(entry.get()))
+button.pack()
+names = ['GOOG', 'AAPL']
+create_labels(names)
 
 root_window.mainloop()
