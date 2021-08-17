@@ -1,16 +1,5 @@
-from functools import partial
-
-from kivy.uix.gridlayout import GridLayout
-from kivy.uix.button import Button
-from kivy.uix.scrollview import ScrollView
-from kivy.core.window import Window
-from kivy.app import runTouchApp
-
 import mysql.connector as connector
-from datetime import datetime
-
-
-from kivy.uix.textinput import TextInput
+import datetime
 
 
 class Database:
@@ -56,7 +45,7 @@ class Notification(Database):
 
     def update_status(self, notification_id, new_status):
         self.cursor.execute(Notification.UPDATE_SQL,
-                            (new_status, datetime.now(), notification_id))
+                            (new_status, datetime.datetime.now(), notification_id))
         self.connection.commit()
         print("status is updated")
         return self.cursor, self.connection
@@ -66,7 +55,7 @@ class Notification(Database):
 
     def add(self, topic, notification_date):
         self.cursor.execute(Notification.INSERT_SQL, (0, topic, notification_date,
-                                                      datetime.now(), datetime.now(), 1))
+                                                      datetime.datetime.now(), datetime.datetime.now(), 1))
         self.connection.commit()
 
     def get_notifications(self, notification_date=None):
@@ -109,60 +98,7 @@ class MailAddress(Database):
         return self.cursor, self.connection
 
 
-def press_button(btn, notification_id, *args):
-    notification = Notification()
-    cursor, connection = notification.get_notification_by_id(notification_id)
-    for (id, notification_type, topic, notification_date, created_at, updated_at, status) in cursor:
-        if status == 1:
-            notification.update_status(notification_id, 0)
-            btn.background_color = (1, 0, 0, .85)
-        else:
-            notification.update_status(notification_id, 1)
-            btn.background_color = (0, 1, 0, .85)
-
-
-def add_notification(topic_btn, notification_date_btn):
-    print(topic_btn.text, notification_date_btn.text)
-    parsed_date = datetime.strptime(notification_date_btn.text, '%d.%m.%Y')
-    notification = Notification()
-    notification.add(topic_btn.text, parsed_date)
-    topic_btn.text = "Уведомление добавлено."
-    notification_date_btn.text = ""
-
-
-def create_layout():
-    layout = GridLayout(cols=1, spacing=10, size_hint_y=None)
-    layout.bind(minimum_height=layout.setter('height'))
-
-    employee_name_input = TextInput(
-        size_hint_y=None, height=50, multiline=True, text="Введите имя работника")
-    notification_date_input = TextInput(
-        size_hint_y=None, height=50, multiline=True, text="Введите день рожденья")
-    layout.add_widget(employee_name_input)
-    layout.add_widget(notification_date_input)
-    add_button = Button(text="Добавить уведомление",
-                        size_hint_y=None, height=120)
-    add_button.on_press = partial(
-        add_notification, employee_name_input, notification_date_input)
-    layout.add_widget(add_button)
-
+if __name__ == '__main__':
+    Notification().add('Сергей Светлаков', '17.05.2021')
     notification = Notification()
     cursor, connection = notification.get_notifications()
-    for (id, notification_type, topic, notification_date, created_at, updated_at, status) in cursor:
-        print(id, notification_type, topic, notification_date,
-              created_at, updated_at, status)
-        btn = Button(text=str(id) + '.' + topic + '-' + str(notification_date),
-                     size_hint_y=None, height=80)
-        btn.on_press = partial(press_button, btn, id)
-        if status == 1:
-            btn.background_color = (0, 1, 0, .85)
-        else:
-            btn.background_color = (1, 0, 0, .85)
-        layout.add_widget(btn)
-    root = ScrollView(size_hint=(1, None), size=(Window.width, Window.height))
-    root.add_widget(layout)
-
-    runTouchApp(root)
-
-
-create_layout()
